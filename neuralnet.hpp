@@ -8,17 +8,16 @@ class NeuralNet {
     std::vector<Layer> layers;
 
   public:
-    NeuralNet() {}
-
-    void runNeuralNet(const VectorXd &input) {
-        layers[0].forward(input);
-        for (size_t i = 0; i < layers.size(); i++) {
-            layers[i].forward(layers[i - 1].getActivations());
-        }
+    VectorXd forward(const VectorXd &x) {
+        Vector out = x;
+        for (auto L : layers)
+            out = L.forward(out);
+        return out;
     }
 
-    VectorXd getPrediction() {
-        Layer predictionLayer = layers.back();
-        return predictionLayer.getActivations();
+    void backward(const VectorXd &grad_output, float lr) {
+        VectorXd grad = grad_output;
+        for (auto it = layers.rbegin(); it != layers.rend(); ++it)
+            grad = (*it).backward(grad, lr);
     }
 };
