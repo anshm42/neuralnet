@@ -1,36 +1,50 @@
 #include "functions.hpp"
-#include <Eigen/Dense>
-
-using namespace Eigen;
 
 class Layer {
-  private:
+private:
     MatrixXd weights;
     VectorXd biases;
+    VectorXd values;
+    VectorXd activations;
 
     VectorXd delta;
 
-    VectorXd last_input, last_z, last_a;
-
-  public:
-    Layer(int inSize, int outSize) {
-        weights = MatrixXd::Random(inSize, outSize);
-        biases = VectorXd::Zero(outSize);
+public:
+    Layer(int in, int out) {
+        weights = MatrixXd::Random(in, out);
+        biases = VectorXd::Zero(out);
     }
 
-    VectorXd forward(const VectorXd &input) {
-        last_input = input;
-        last_z = (weights * input) + biases;
-        last_a = sigmoid(last_z);
-        return last_a;
+    void forward(const VectorXd& input) {
+        VectorXd y = weights.transpose() * input + biases;
+        values = y;
+        activations = sigmoid(y);
     }
 
-    VectorXd backward(const VectorXd &gradOutput, float lr) {
-        VectorXd delta = gradOutput.array() * dsigmoid(last_a).array();
-        MatrixXd dW = delta * last_input.transpose();
-        VectorXd db = delta;
-        weights.noalias() -= lr * dW;
-        biases -= lr * db;
-        return weights.transpose() * delta;
+    VectorXd getActivations() {
+        return activations;
     }
+    
+    VectorXd dActivations() {
+        return dSigmoid(values);
+    }
+
+
+    void setDelta(const VectorXd& delta) {
+        this->delta = delta;
+    }
+
+    VectorXd getDelta() {
+        return delta;
+    }
+
+    MatrixXd getWeights() {
+        return weights;
+    }
+
+    void updateWeights(const VectorXd& input, double learning_rate) {
+        weights -= learning_rate * input * delta.transpose();
+        biases -= learning_rate * delta;
+    }
+   
 };
