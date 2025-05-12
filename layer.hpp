@@ -42,9 +42,9 @@ public:
         return weights;
     }
 
-    void updateWeights(const VectorXd& input, double learning_rate) {
-        weights -= learning_rate * input * delta.transpose();
-        biases -= learning_rate * delta;
+    void updateWeights(const VectorXd& input, double lr) {
+        weights -= lr * input * delta.transpose();
+        biases -= lr * delta;
     }
    
 };

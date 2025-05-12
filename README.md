@@ -1,3 +1,3 @@
 # neuralnet
 
-Neural network created from scratch using c++
+Neural network created from scratch using C++.
