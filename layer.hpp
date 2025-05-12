@@ -25,23 +25,12 @@ class Layer {
         return last_a;
     }
 
-    VectorXd backward(const VectorXd &grad_output, float lr) {
-        VectorXd delta = grad_output.array() * dsigmoid(last_a).array();
+    VectorXd backward(const VectorXd &gradOutput, float lr) {
+        VectorXd delta = gradOutput.array() * dsigmoid(last_a).array();
         MatrixXd dW = delta * last_input.transpose();
         VectorXd db = delta;
         weights.noalias() -= lr * dW;
         biases -= lr * db;
         return weights.transpose() * delta;
-    }
-
-    void set_delta(const VectorXd &delta) { this->delta = delta; }
-
-    VectorXd get_delta() { return delta; }
-
-    MatrixXd get_weights() { return weights; }
-
-    void updateWeights(const VectorXd &input, double learningRate) {
-        weights -= learningRate * input * delta.transpose();
-        biases -= learningRate * delta;
     }
 };

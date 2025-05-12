@@ -9,3 +9,11 @@ inline VectorXd sigmoid(const VectorXd &v) {
 inline VectorXd dsigmoid(const VectorXd &v) {
     return sigmoid(v).array() * (1.0 - sigmoid(v).array());
 }
+
+inline double MSE(const VectorXd &expectedOut, const VectorXd &trueOut) {
+    return (expectedOut.array() - trueOut.array()).square().mean();
+}
+
+inline VectorXd dMSE(const VectorXd &expectedOut, const VectorXd &trueOut) {
+    return 2 * (expectedOut - trueOut) / expectedOut.size();
+}
