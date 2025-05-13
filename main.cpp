@@ -8,7 +8,6 @@ const std::string mnist_test_label_path = "dataset/t10k-labels.idx1-ubyte";
 
 using namespace Eigen;
 
-
 int main() {
     std::vector<VectorXd> trainingData;
     std::vector<VectorXd> trainingDataLabels;
@@ -21,11 +20,22 @@ int main() {
     read_mnist_test_data(mnist_test_data_path, testingDataset);
     read_mnist_test_label(mnist_test_label_path, testingDatasetLabels);
 
-    Network network(784, 64);
-    network.addLayer(64, 8);
-    network.addLayer(8, 10);
-
-    network.train(trainingData, trainingDataLabels, 0.1, 3);
+    Network network(784, 512, ActivationType::RELU);
+    
+    network.addLayer(512, 256, ActivationType::LEAKY_RELU);
+    network.addLayer(256, 128, ActivationType::RELU);
+    network.addLayer(128, 64, ActivationType::LEAKY_RELU);
+    network.addLayer(64, 32, ActivationType::SIGMOID);
+    
+    network.addLayer(32, 10, ActivationType::SIGMOID);
+    
+    double learningRate = 0.001;
+    int batchSize = 128;
+    int epochs = 25;
+    double decayRate = 0.9;
+    
+    network.train(trainingData, trainingDataLabels, learningRate, batchSize, epochs, decayRate);
+    
     network.test(testingDataset, testingDatasetLabels);
 
     return 0;

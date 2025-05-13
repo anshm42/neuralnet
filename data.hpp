@@ -2,7 +2,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <string>
-#include <netinet/in.h> // For ntohl
+#include <netinet/in.h>
 
 void read_mnist_train_data(const std::string& path, std::vector<Eigen::VectorXd>& data) {
     std::ifstream file(path, std::ios::binary);
