@@ -3,6 +3,7 @@
 #include <random>
 #include <algorithm>
 #include <iomanip>
+#include <cmath>
 #include "layer.hpp"
 
 class Network {
@@ -27,9 +28,15 @@ public:
 
     void backward(const MatrixXd& batchInput, const MatrixXd& batchTarget, double lr) {
         MatrixXd output = layers.back().getActivations();
-        MatrixXd error = output - batchTarget;
         
-        MatrixXd delta = error.cwiseProduct(layers.back().getActivationDerivative(layers.back().getActivations()));
+        MatrixXd delta;
+        if (layers.back().getActivationType() == ActivationType::SOFTMAX) {
+            delta = output - batchTarget;
+        } else {
+            MatrixXd error = output - batchTarget;
+            delta = error.cwiseProduct(layers.back().getActivationDerivative(output));
+        }
+        
         layers.back().setDelta(delta);
         
         for (int i = layers.size() - 2; i >= 0; i--) {
@@ -37,7 +44,10 @@ public:
             MatrixXd nextDelta = layers[i + 1].getDelta();
             
             MatrixXd hiddenError = nextWeights * nextDelta;
-            MatrixXd hiddenDelta = hiddenError.cwiseProduct(layers[i].getActivationDerivative(layers[i].getActivations()));
+            
+            MatrixXd hiddenOutput = layers[i].getActivations();
+            MatrixXd hiddenDelta = hiddenError.cwiseProduct(layers[i].getActivationDerivative(hiddenOutput));
+            
             layers[i].setDelta(hiddenDelta);
         }
         
@@ -76,6 +86,7 @@ public:
                 case ActivationType::SIGMOID: actType = "SIGMOID"; break;
                 case ActivationType::LEAKY_RELU: actType = "LEAKY_RELU"; break;
                 case ActivationType::RELU: actType = "RELU"; break;
+                case ActivationType::SOFTMAX: actType = "SOFTMAX"; break;
                 default: actType = "UNKNOWN"; break;
             }
             if (i < layers.size() - 1) {
@@ -103,7 +114,7 @@ public:
             std::shuffle(indices.begin(), indices.end(), g);
             
             double totalLoss = 0.0;
-            int progressStep = numBatches / 10;
+            int progressStep = numBatches / 50;
             if (progressStep == 0) progressStep = 1;
             
             for (int batch = 0; batch < numBatches; batch++) {
@@ -189,7 +200,7 @@ public:
             std::cout << "=================================\n\n";
         }
         
-        int progressStep = data.size() / 20;
+        int progressStep = data.size() / 100;
         if (progressStep == 0) progressStep = 1;
         
         for (size_t i = 0; i < data.size(); i++) {
@@ -200,7 +211,6 @@ public:
             
             VectorXd output = layers.back().getActivations().col(0);
             
-            // Calculate loss for this sample
             MatrixXd target(labels[i].size(), 1);
             target.col(0) = labels[i];
             totalLoss += MSE(target, layers.back().getActivations());

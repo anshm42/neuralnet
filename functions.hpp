@@ -5,7 +5,8 @@ using namespace Eigen;
 enum class ActivationType {
     RELU,
     SIGMOID,
-    LEAKY_RELU
+    LEAKY_RELU,
+    SOFTMAX
 };
 
 inline VectorXd sigmoid(const VectorXd &v) {
@@ -54,4 +55,21 @@ inline MatrixXd leakyRelu(const MatrixXd &m, double alpha = 0.01) {
 
 inline MatrixXd dLeakyRelu(const MatrixXd &m, double alpha = 0.01) {
     return (m.array() > 0).select(MatrixXd::Ones(m.rows(), m.cols()), MatrixXd::Constant(m.rows(), m.cols(), alpha));
+}
+
+inline MatrixXd softmax(const MatrixXd &m) {
+    MatrixXd result(m.rows(), m.cols());
+    for (int i = 0; i < m.cols(); i++) {
+        VectorXd col = m.col(i);
+        double max_val = col.maxCoeff();
+        col = col.array() - max_val; 
+        col = col.array().exp();
+        col = col / col.sum();
+        result.col(i) = col;
+    }
+    return result;
+}
+
+inline MatrixXd dSoftmax(const MatrixXd &m) {
+    return MatrixXd::Ones(m.rows(), m.cols());
 }

@@ -1,5 +1,6 @@
 #include "network.hpp"
 #include "data.hpp"
+#include <ctime>
 
 const std::string mnist_train_data_path = "dataset/train-images.idx3-ubyte";
 const std::string mnist_train_label_path = "dataset/train-labels.idx1-ubyte";
@@ -9,6 +10,8 @@ const std::string mnist_test_label_path = "dataset/t10k-labels.idx1-ubyte";
 using namespace Eigen;
 
 int main() {
+    srand(time(nullptr));
+    
     std::vector<VectorXd> trainingData;
     std::vector<VectorXd> trainingDataLabels;
 
@@ -20,19 +23,22 @@ int main() {
     read_mnist_test_data(mnist_test_data_path, testingDataset);
     read_mnist_test_label(mnist_test_label_path, testingDatasetLabels);
 
-    Network network(784, 512, ActivationType::RELU);
+    std::cout << "Training data loaded: " << trainingData.size() << " samples" << std::endl;
+    std::cout << "Testing data loaded: " << testingDataset.size() << " samples" << std::endl;
     
-    network.addLayer(512, 256, ActivationType::LEAKY_RELU);
-    network.addLayer(256, 128, ActivationType::RELU);
-    network.addLayer(128, 64, ActivationType::LEAKY_RELU);
-    network.addLayer(64, 32, ActivationType::SIGMOID);
+    if (trainingData.size() == 0 || testingDataset.size() == 0) {
+        std::cerr << "Error: Failed to load datasets. Check file paths." << std::endl;
+        return 1;
+    }
+
+    Network network(784, 200, ActivationType::RELU);
+    network.addLayer(200, 100, ActivationType::RELU);
+    network.addLayer(100, 10, ActivationType::SOFTMAX);
     
-    network.addLayer(32, 10, ActivationType::SIGMOID);
-    
-    double learningRate = 0.001;
-    int batchSize = 128;
-    int epochs = 25;
-    double decayRate = 0.9;
+    double learningRate = 0.003;
+    int batchSize = 32;
+    int epochs = 15;
+    double decayRate = 0.95;
     
     network.train(trainingData, trainingDataLabels, learningRate, batchSize, epochs, decayRate);
     

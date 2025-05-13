@@ -14,7 +14,11 @@ private:
 public:
     Layer(int in, int out, ActivationType actType = ActivationType::RELU) 
         : activationType(actType) {
-        weights = MatrixXd::Random(in, out) * sqrt(2.0 / (in + out));
+        if (actType == ActivationType::RELU || actType == ActivationType::LEAKY_RELU) {
+            weights = MatrixXd::Random(in, out) * sqrt(2.0 / in);
+        } else {
+            weights = MatrixXd::Random(in, out) * sqrt(2.0 / (in + out));
+        }
         biases = VectorXd::Zero(out);
     }
     
@@ -44,6 +48,9 @@ public:
             case ActivationType::LEAKY_RELU:
                 activations = leakyRelu(y, leakyReluAlpha);
                 break;
+            case ActivationType::SOFTMAX:
+                activations = softmax(y);
+                break;
             case ActivationType::RELU:
             default:
                 activations = relu(y);
@@ -62,6 +69,8 @@ public:
                 return dSigmoid(m);
             case ActivationType::LEAKY_RELU:
                 return dLeakyRelu(m, leakyReluAlpha);
+            case ActivationType::SOFTMAX:
+                return dSoftmax(m);
             case ActivationType::RELU:
             default:
                 return dRelu(m);
@@ -92,10 +101,34 @@ public:
     }
 
     void updateWeights(const MatrixXd& batchInput, double lr) {
-        double lambda = 0.00001;
+        double lambda = 0.0001;
         
-        MatrixXd dW = batchInput * delta.transpose() / batchInput.cols() + lambda * weights;
+        MatrixXd dW = batchInput * delta.transpose() / batchInput.cols();
         VectorXd db = delta.rowwise().mean();
+        
+        dW += lambda * weights;
+        
+        double clipThreshold = 5.0;
+        
+        for (int i = 0; i < dW.rows(); i++) {
+            for (int j = 0; j < dW.cols(); j++) {
+                if (dW(i, j) > clipThreshold) dW(i, j) = clipThreshold;
+                if (dW(i, j) < -clipThreshold) dW(i, j) = -clipThreshold;
+                
+                if (std::isnan(dW(i, j))) {
+                    dW(i, j) = 0.0;
+                }
+            }
+        }
+        
+        for (int i = 0; i < db.size(); i++) {
+            if (db(i) > clipThreshold) db(i) = clipThreshold;
+            if (db(i) < -clipThreshold) db(i) = -clipThreshold;
+            
+            if (std::isnan(db(i))) {
+                db(i) = 0.0;
+            }
+        }
         
         weights -= lr * dW;
         biases -= lr * db;
